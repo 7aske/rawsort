@@ -14,18 +14,40 @@ sudo make install
 rawsort -s $HOME/Pictures/import -d $HOME/Pictures/export -f "%K/%L/%D/%D_%t_%K_%L%e"
 ```
 
-## Options
+Photos will recursively be searched for in the source directory and moved to the destination directory with the provided format:
 
 ```
+$HOME/Pictures/import/IMG_001.jpg
+```
+
+will be moved to
+
+```
+$HOME/Pictures/export/Canon/5D Mark IV/2019-01-01/2019-01-01_12:34:56_Canon_5D Mark IV.jpg
+```
+
+where the format is
+
+```
+Canon - %K
+5D Mark IV - %L
+2019-01-01 - %D
+2019-01-01_12:34:56_Canon_5D Mark IV.jpg - %D_%t_%K_%L%e
+```
+
+## Options
+
 Filename format options:
-    %D - Date
-    %t - Time
-    %y - Year
-    %m - Month (mm)
-    %d - Day
-    %K - Make
-    %L - Model
-    %e - Extension
+
+```
+%D - Date
+%t - Time
+%y - Year
+%m - Month (mm)
+%d - Day
+%K - Make
+%L - Model
+%e - Extension
 ```
 
 ## Contact

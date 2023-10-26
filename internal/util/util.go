@@ -1,6 +1,7 @@
-package main
+package util
 
 import (
+	"github.com/7aske/rawsort/internal/exif"
 	"io"
 	"os"
 	"strconv"
@@ -28,7 +29,7 @@ import (
 // %d - Day (dd)
 //
 // %e - Extension (.jpg, .png, .raw, .nef, ...)
-func FormatFilename(format string, data ExifData) string {
+func FormatFilename(format string, data *exif.Data) string {
 	var sb strings.Builder
 	isFormat := false
 	for _, c := range format {

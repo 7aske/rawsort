@@ -1,6 +1,12 @@
-all: main.go exif.go util.go
-	go build -o bin/rawsort .
+PREFIX = /usr/local
+CMD = rawsort
 
-install: bin/rawsort
-	mkdir -p /usr/local/bin
-	cp bin/rawsort /usr/local/bin/rawsort
+default: cmd/rawsort/main.go
+	go build -o bin/$(CMD) cmd/rawsort/main.go
+
+install: default
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	cp bin/$(CMD) $(PREFIX)/bin/$(CMD)
+
+clean:
+	rm -f bin/rawsort

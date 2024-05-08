@@ -112,6 +112,9 @@ func main() {
 		destInfo, err := os.Stat(destPath)
 		// File exists and is the same file
 		if err != nil && (destInfo != nil && destInfo.Size() == info.Size()) {
+			if args.Verbose {
+				_, _ = fmt.Fprintf(os.Stderr, "Duplicate file found: %s\n", destPath)
+			}
 			return nil
 		}
 

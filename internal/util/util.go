@@ -1,9 +1,11 @@
 package util
 
 import (
+	"fmt"
 	"github.com/7aske/rawsort/internal/exif"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -116,4 +118,17 @@ func CopyFileContents(src, dst string) (err error) {
 	}
 	err = out.Sync()
 	return
+}
+
+// RenameFile renames a file adding a number suffix before the extensions
+func RenameFile(path string) string {
+	dir := filepath.Dir(path)
+	ext := filepath.Ext(path)
+	base := strings.TrimSuffix(filepath.Base(path), ext)
+	for i := 1; ; i++ {
+		newPath := filepath.Join(dir, fmt.Sprintf("%s-%d%s", base, i, ext))
+		if _, err := os.Stat(newPath); os.IsNotExist(err) {
+			return newPath
+		}
+	}
 }

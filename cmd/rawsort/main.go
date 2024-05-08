@@ -20,6 +20,8 @@ type Args struct {
 	Format string
 	// Verbose verbosity of the output
 	Verbose bool
+	// Interactive asks for user input before renaming files
+	Interactive bool
 }
 
 // DefaultFormat Default format for file sorting:
@@ -30,7 +32,6 @@ const DefaultFormat = "%K/%L/%D/%D_%t_%K_%L%e"
 func parseArgs() Args {
 	parser := argparse.NewParser("rawsort",
 		"Sorts raw files into folders by camera make, model and date")
-
 	s := parser.String("s", "src", &argparse.Options{
 		Required: true,
 		Help:     "Source folder",
@@ -56,6 +57,10 @@ func parseArgs() Args {
 		Required: false,
 		Help:     "Verbose output",
 	})
+	i := parser.Flag("i", "interactive", &argparse.Options{
+		Required: false,
+		Help:     "Interactive mode, ask user on conflicts",
+	})
 
 	// If the default value is specified in the parser.String the help output
 	// is rather ugly, so we set it here instead
@@ -70,10 +75,11 @@ func parseArgs() Args {
 	}
 
 	return Args{
-		Src:     *s,
-		Dest:    *d,
-		Format:  *f,
-		Verbose: *v,
+		Src:         *s,
+		Dest:        *d,
+		Format:      *f,
+		Verbose:     *v,
+		Interactive: *i,
 	}
 }
 
@@ -111,8 +117,34 @@ func main() {
 
 		// File exists and is not the same file
 		if destInfo != nil && destInfo.Size() != info.Size() {
-			// TODO: rename dest file
-			return nil
+			// skip, overwrite or rename
+			// ask user for input
+			if args.Interactive {
+				for {
+					_, _ = fmt.Fprintf(os.Stderr, "File %s already exists (a)bort, (s)kip, (o)verwrite or (r)ename? (a,s,o,r): ", destPath)
+					var input string
+					_, err := fmt.Scanln(&input)
+					if err != nil {
+						return err
+					}
+
+					switch input {
+					case "a":
+						os.Exit(1)
+					case "s":
+						return nil
+					case "o":
+						break
+					case "r":
+						destPath = util.RenameFile(destPath)
+					}
+				}
+			} else {
+				if args.Verbose {
+					_, _ = fmt.Fprintf(os.Stderr, "File %s already exists\n", destPath)
+				}
+				destPath = util.RenameFile(destPath)
+			}
 		}
 
 		if args.Verbose {

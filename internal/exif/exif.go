@@ -4,6 +4,7 @@ import (
 	"github.com/rwcarlsen/goexif/exif"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -24,6 +25,9 @@ var MakeMap = map[string]string{
 var ModelMap = map[string]string{
 	"FinePix X100": "X100",
 }
+
+var OnlyAlphaRegex = regexp.MustCompile(`\W+`)
+var WhiteSpaceRegex = regexp.MustCompile(`\s+`)
 
 // Data contains the relevant data extracted from a file's EXIF data.
 type Data struct {
@@ -79,6 +83,10 @@ func adaptModelName(model string) string {
 	if val, ok := ModelMap[model]; ok {
 		return val
 	}
+
+	model = strings.TrimSpace(model)
+	model = WhiteSpaceRegex.ReplaceAllString(model, "-")
+	model = OnlyAlphaRegex.ReplaceAllString(model, "")
 	return model
 }
 
@@ -86,5 +94,8 @@ func adaptMakeName(make string) string {
 	if val, ok := MakeMap[make]; ok {
 		return val
 	}
+	make = strings.TrimSpace(make)
+	make = WhiteSpaceRegex.ReplaceAllString(make, "-")
+	make = OnlyAlphaRegex.ReplaceAllString(make, "")
 	return make
 }

@@ -97,15 +97,15 @@ func monthToNumber(month time.Month) string {
 }
 
 // CopyFileContents copies the contents of the file named src to the file named by dst.
-func CopyFileContents(src, dst string) (err error) {
+func CopyFileContents(src, dst string) (size int64, err error) {
 	in, err := os.Open(src)
 	if err != nil {
-		return
+		return 0, err
 	}
 	defer in.Close()
 	out, err := os.Create(dst)
 	if err != nil {
-		return
+		return 0, err
 	}
 	defer func() {
 		cerr := out.Close()
@@ -113,11 +113,12 @@ func CopyFileContents(src, dst string) (err error) {
 			err = cerr
 		}
 	}()
-	if _, err = io.Copy(out, in); err != nil {
-		return
+	written, err := io.Copy(out, in)
+	if err != nil {
+		return 0, err
 	}
 	err = out.Sync()
-	return
+	return written, err
 }
 
 // RenameFile renames a file adding a number suffix before the extensions

@@ -20,6 +20,7 @@ var MakeMap = map[string]string{
 	"RICOH IMAGING COMPANY, LTD.": "Ricoh",
 	"KODAK":                       "Kodak",
 	"LG Electronics":              "LG",
+	"samsung":                     "Samsung",
 }
 
 var ModelMap = map[string]string{

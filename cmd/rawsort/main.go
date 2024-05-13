@@ -5,7 +5,8 @@ import (
 	"github.com/7aske/rawsort/internal/exif"
 	"github.com/7aske/rawsort/internal/util"
 	"github.com/akamensky/argparse"
-	"log"
+	"github.com/k0kubun/go-ansi"
+	"github.com/schollz/progressbar/v3"
 	"os"
 	"path/filepath"
 )
@@ -22,6 +23,16 @@ type Args struct {
 	Verbose bool
 	// Interactive asks for user input before renaming files
 	Interactive bool
+}
+
+// CopyData Information about a file to be copied
+type CopyData struct {
+	// SourcePath      string Source path
+	SourcePath string
+	// DestinationPath string Destination path
+	DestinationPath string
+	// Size            int64 Size of the file in bytes
+	Size int64
 }
 
 // DefaultFormat Default format for file sorting:
@@ -86,6 +97,8 @@ func parseArgs() Args {
 func main() {
 	args := parseArgs()
 
+	var copyData []CopyData
+
 	err := filepath.Walk(args.Src, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -97,7 +110,7 @@ func main() {
 
 		data, err := exif.ReadExifData(path)
 		if err != nil {
-			log.Println(err)
+			_ = fmt.Errorf("error reading exif data: %v", err)
 			return nil
 		}
 
@@ -150,17 +163,53 @@ func main() {
 			}
 		}
 
-		if args.Verbose {
-			_, _ = fmt.Fprintf(os.Stderr, "%s -> %s\n", path, destPath)
-		}
-		err = util.CopyFileContents(path, destPath)
+		copyData = append(copyData, CopyData{path, destPath, info.Size()})
 
 		return nil
 	})
 
 	if err != nil {
-		log.Println(err)
+		_, _ = fmt.Fprintf(os.Stderr, "error reading path %q: %v\n", args.Src, err)
 		os.Exit(1)
 	}
 
+	bar := initProgressBar(calculateTotalSize(copyData))
+
+	for _, data := range copyData {
+		var written int64
+		written, err = util.CopyFileContents(data.SourcePath, data.DestinationPath)
+		if err != nil {
+			_ = fmt.Errorf("error copying file: %v", err)
+		}
+
+		_ = bar.Add64(written)
+		bar.Describe(fmt.Sprintf("Copying %s", filepath.Base(data.SourcePath)))
+	}
+
+}
+
+func calculateTotalSize(data []CopyData) (totalSize int64) {
+	for _, d := range data {
+		totalSize += d.Size
+	}
+	return
+}
+
+func initProgressBar(max int64) *progressbar.ProgressBar {
+	return progressbar.NewOptions64(max,
+		progressbar.OptionEnableColorCodes(true),
+		progressbar.OptionFullWidth(),
+		progressbar.OptionSetPredictTime(true),
+		progressbar.OptionSetRenderBlankState(true),
+		progressbar.OptionSetWriter(ansi.NewAnsiStdout()),
+		progressbar.OptionShowBytes(true),
+		progressbar.OptionShowCount(),
+		progressbar.OptionShowElapsedTimeOnFinish(),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "[green]=[reset]",
+			SaucerHead:    "[green]>[reset]",
+			SaucerPadding: ".",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}))
 }

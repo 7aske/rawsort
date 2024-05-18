@@ -23,6 +23,8 @@ type Args struct {
 	Verbose bool
 	// Interactive asks for user input before renaming files
 	Interactive bool
+    // Whether to move files rather than copy
+    Move bool
 }
 
 // CopyData Information about a file to be copied
@@ -72,6 +74,10 @@ func parseArgs() Args {
 		Required: false,
 		Help:     "Interactive mode, ask user on conflicts",
 	})
+	m := parser.Flag("m", "move", &argparse.Options{
+		Required: false,
+		Help:     "Whether to move rather than copy",
+	})
 
 	// If the default value is specified in the parser.String the help output
 	// is rather ugly, so we set it here instead
@@ -91,6 +97,7 @@ func parseArgs() Args {
 		Format:      *f,
 		Verbose:     *v,
 		Interactive: *i,
+        Move:        *m,
 	}
 }
 
@@ -124,10 +131,13 @@ func main() {
 
 		destInfo, err := os.Stat(destPath)
 		// File exists and is the same file
-		if err != nil && (destInfo != nil && destInfo.Size() == info.Size()) {
+		if err == nil && (destInfo != nil && destInfo.Size() == info.Size()) {
 			if args.Verbose {
 				_, _ = fmt.Fprintf(os.Stderr, "Duplicate file found: %s\n", destPath)
 			}
+            if args.Move {
+                os.Remove(path)
+            }
 			return nil
 		}
 
@@ -169,7 +179,7 @@ func main() {
 	})
 
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "error reading path %q: %v\n", args.Src, err)
+		_ = fmt.Errorf("error reading path %q: %v\n", args.Src, err)
 		os.Exit(1)
 	}
 
@@ -177,13 +187,20 @@ func main() {
 
 	for _, data := range copyData {
 		var written int64
-		written, err = util.CopyFileContents(data.SourcePath, data.DestinationPath)
-		if err != nil {
-			_ = fmt.Errorf("error copying file: %v", err)
-		}
+        if args.Move {
+            err = os.Rename(data.SourcePath, data.DestinationPath)
+            written = data.Size
+        } else {
+            written, err = util.Copy(data.SourcePath, data.DestinationPath)
+        }
+
+        if err != nil {
+            _ = fmt.Errorf("error transferring file: %v", err)
+            os.Exit(255)
+        }
 
 		_ = bar.Add64(written)
-		bar.Describe(fmt.Sprintf("Copying %s", filepath.Base(data.SourcePath)))
+		bar.Describe(fmt.Sprintf("Transferring %s", filepath.Base(data.SourcePath)))
 	}
 
 }

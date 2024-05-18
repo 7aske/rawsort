@@ -96,8 +96,8 @@ func monthToNumber(month time.Month) string {
 	return ""
 }
 
-// CopyFileContents copies the contents of the file named src to the file named by dst.
-func CopyFileContents(src, dst string) (size int64, err error) {
+// Copy copies the contents of the file named src to the file named by dst.
+func Copy(src, dst string) (size int64, err error) {
 	in, err := os.Open(src)
 	if err != nil {
 		return 0, err

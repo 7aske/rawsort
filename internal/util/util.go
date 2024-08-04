@@ -47,7 +47,9 @@ func FormatFilename(format string, data *exif.Data) string {
 			case 'D':
 				sb.WriteString(data.DateTime.Format(time.DateOnly))
 			case 't':
-				sb.WriteString(data.DateTime.Format(time.TimeOnly))
+				// Colons cause problems in smb mounted drives
+				formatted := strings.ReplaceAll(data.DateTime.Format(time.TimeOnly), ":", "")
+				sb.WriteString(formatted)
 			case 'y':
 				sb.WriteString(strconv.Itoa(data.DateTime.Year()))
 			case 'm':

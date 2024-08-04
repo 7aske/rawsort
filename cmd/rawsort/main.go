@@ -23,8 +23,8 @@ type Args struct {
 	Verbose bool
 	// Interactive asks for user input before renaming files
 	Interactive bool
-    // Whether to move files rather than copy
-    Move bool
+	// Whether to move files rather than copy
+	Move bool
 }
 
 // CopyData Information about a file to be copied
@@ -57,11 +57,11 @@ func parseArgs() Args {
 		Required: false,
 		Help: "Filename format\n" +
 			"  Filename format options:\n" +
-			"    %D - Date\n" +
-			"    %t - Time\n" +
-			"    %y - Year\n" +
+			"    %D - Date (yyyy-mm-dd)\n" +
+			"    %t - Time (hhMMss)\n" +
+			"    %y - Year (yyyy)\n" +
 			"    %m - Month (mm)\n" +
-			"    %d - Day\n" +
+			"    %d - Day (dd)\n" +
 			"    %K - Make\n" +
 			"    %L - Model\n" +
 			"    %e - Extension\n",
@@ -97,7 +97,7 @@ func parseArgs() Args {
 		Format:      *f,
 		Verbose:     *v,
 		Interactive: *i,
-        Move:        *m,
+		Move:        *m,
 	}
 }
 
@@ -135,9 +135,9 @@ func main() {
 			if args.Verbose {
 				_, _ = fmt.Fprintf(os.Stderr, "Duplicate file found: %s\n", destPath)
 			}
-            if args.Move {
-                os.Remove(path)
-            }
+			if args.Move {
+				os.Remove(path)
+			}
 			return nil
 		}
 
@@ -187,17 +187,17 @@ func main() {
 
 	for _, data := range copyData {
 		var written int64
-        if args.Move {
-            err = os.Rename(data.SourcePath, data.DestinationPath)
-            written = data.Size
-        } else {
-            written, err = util.Copy(data.SourcePath, data.DestinationPath)
-        }
+		if args.Move {
+			err = os.Rename(data.SourcePath, data.DestinationPath)
+			written = data.Size
+		} else {
+			written, err = util.Copy(data.SourcePath, data.DestinationPath)
+		}
 
-        if err != nil {
-            _ = fmt.Errorf("error transferring file: %v", err)
-            os.Exit(255)
-        }
+		if err != nil {
+			_ = fmt.Errorf("error transferring file: %v", err)
+			os.Exit(255)
+		}
 
 		_ = bar.Add64(written)
 		bar.Describe(fmt.Sprintf("Transferring %s", filepath.Base(data.SourcePath)))
